@@ -38,20 +38,4 @@ def analyze(repo_path: Path) -> Dict[str, Any]:
         })
     
     result["found"] = len(result["matches"]) > 0
-    
-    result["completeness"] = None
-    if result["found"]:
-        result["completeness"] = {
-            "layout_defined": len(layout_files) > 0,
-            "links_present": len(link_files) > 0,
-            "in_build_process": any(
-                "build" in m["file"].lower() or 
-                "ci" in m["file"].lower() or
-                "makefile" in m["file"].lower() or
-                ".yml" in m["file"].lower()
-                for m in result["matches"] 
-                if m["pattern"] not in ["*.link", "layout.json"]
-            ),
-        }
-    
     return result

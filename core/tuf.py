@@ -39,26 +39,4 @@ def analyze(repo_path: Path) -> Dict[str, Any]:
                 pass
     
     result["found"] = len(result["matches"]) > 0
-        
-    result["completeness"] = None
-    if result["found"]:
-        signs = any(
-            "kms" in m["context"].lower() or
-            "ssm" in m["context"].lower() or
-            "signing" in m["context"].lower() or
-            "sign" in m["file"].lower()
-            for m in result["matches"]
-        )
-        generates = any(
-            "tough" in m["context"].lower() or
-            "tuftool" in m["context"].lower() or
-            "create" in m["context"].lower()
-            for m in result["matches"]
-        )
-        result["completeness"] = {
-            "signs_metadata": signs,
-            "generates_metadata": generates,
-            "hosts_repository": len(metadata_found) > 0,
-        }
-    
     return result

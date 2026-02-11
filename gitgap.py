@@ -7,6 +7,9 @@ Scans repositories for signs of:
 - SBOM (software bill of materials)
 - TUF (secure distribution)
 
+See REPO_ROLES.md for separation of concerns.
+Human review required to interpret repo separation of concerns, and completeness of implementation.
+
 Usage:
     python scan.py /path/to/repo
     python scan.py /path/to/repo -o results.json
@@ -17,7 +20,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from analyzers import gittuf, intoto, sbom, tuf
+from core import gittuf, intoto, sbom, tuf
 
 
 def scan_repo(repo_path: str) -> dict:
@@ -66,12 +69,6 @@ def print_results(results: dict):
         print(f"\n{check.upper()}: {status}")
         
         if data["found"]:
-            # Show completeness
-            if data.get("completeness"):
-                print("  Completeness:")
-                for k, v in data["completeness"].items():
-                    print(f"    {k}: {v}")
-            
             # Show top matches
             if data["matches"]:
                 print(f"  Matches ({len(data['matches'])} matches):")

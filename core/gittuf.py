@@ -26,15 +26,4 @@ def analyze(repo_path: Path) -> Dict[str, Any]:
         })
     
     result["found"] = len(result["matches"]) > 0
-
-    result["completeness"] = None
-    if result["found"]:
-        gittuf_dir = repo_path / ".gittuf"
-        git_gittuf = repo_path / ".git" / "refs" / "gittuf"
-        result["completeness"] = {
-            "policy_defined": (gittuf_dir / "policy.json").exists(),
-            "root_defined": (gittuf_dir / "root.json").exists(),
-            "refs_active": git_gittuf.exists(),
-        }
-    
     return result

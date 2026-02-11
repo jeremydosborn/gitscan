@@ -34,26 +34,4 @@ def analyze(repo_path: Path) -> Dict[str, Any]:
         })
     
     result["found"] = len(result["matches"]) > 0
-        
-    result["completeness"] = None
-    if result["found"]:
-        generates = any(
-            "sbomtool" in m["context"].lower() or 
-            "syft" in m["context"].lower() or
-            "generate" in m["context"].lower()
-            for m in result["matches"]
-        )
-        publishes = any(
-            "upload" in m["context"].lower() or
-            "publish" in m["context"].lower() or
-            "s3" in m["context"].lower() or
-            "registry" in m["context"].lower()
-            for m in result["matches"]
-        )
-        result["completeness"] = {
-            "generates": generates,
-            "stores_in_repo": len(sbom_files) > 0,
-            "publishes_external": publishes,
-        }
-
     return result
