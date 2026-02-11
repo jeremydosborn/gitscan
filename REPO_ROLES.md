@@ -17,7 +17,7 @@ Each tool may span multiple repos. gitgap finds signals in one repo at a time. F
 | OS/Client | Verifies signatures, applies updates | tuf-client, update-verifier |
 | Hosting | Serves metadata + artifacts | (external infra, not in repo) |
 
-### Example: gittuf roles across repos
+### Example: gittuf roles across repos.
 
 | Role | What it does | Example signals |
 |------|--------------|-----------------|
