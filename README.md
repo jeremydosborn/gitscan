@@ -4,7 +4,7 @@ Config-driven repo scanner with anonymous research survey using threshold crypto
 
 ## What it does
 
-Scans repositories for patterns defined in YAML configs, then optionally collects anonymous survey responses about the results.
+Scans repositories for patterns defined in YAML configs, then optionally collects an anonymous survey response about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints 
 
 ## Security Properties
 
@@ -14,7 +14,7 @@ Scans repositories for patterns defined in YAML configs, then optionally collect
 | Compromise 2 endpoints | Still encrypted (need private key) |
 | Compromise 2 endpoints + private key | Get responses, but no attribution |
 | Steal tokens | Can submit on behalf of others (dedupe keeps first) |
-| Flood with garbage | Decryption fails, discarded |
+| Flood with garbage | Rate-limited by endpoint; garbage fails decryption and is discarded |
 
 Shamir secret sharing is information-theoretically secure (quantum-safe). Individual shares reveal nothing.
 
@@ -44,7 +44,7 @@ gitgap-admin tokens emails.txt
 gitgap-admin aggregate --key private.key
   → logs counts (before decrypt)
   → dedupes by submission ID (keeps first)
-  → reconstructs shares (2 of 3)
+  → reconstructs shares from endpoints (2 of 3)
   → decrypts with private key
   → outputs aggregates only
   → deletes individual shares
@@ -54,12 +54,12 @@ gitgap-admin aggregate --key private.key
 
 ```bash
 # Clone
-git clone https://github.com/youruser/gitgap
+git clone https://github.com/jeremydosborn/gitgap
 cd gitgap
 
 # Setup
-python3 -m venv venv
-source venv/bin/activate
+
+#install yaml
 pip install pyyaml
 
 # Install age (for encryption)
