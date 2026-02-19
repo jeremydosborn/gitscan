@@ -4,7 +4,7 @@ Config-driven repo scanner with anonymous research survey using threshold crypto
 
 ## What it does
 
-Scans repositories for patterns defined in YAML configs, then optionally collects an anonymous survey response about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints 
+Scans repositories for patterns defined in YAML configs, then optionally collects an anonymous survey response about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints. One primary goal is to develop a hardened survey tool for security research. 
 
 ## Security Properties
 
@@ -29,7 +29,6 @@ gitgap-admin init
 gitgap-admin tokens emails.txt           
   → outputs: publickey.uniqueid tokens
   → share tokens/usage via secure channel
-                                         pip install gitgap
                                          gitgap scan /repo \
                                            --config tufcheck \
                                            --token <token> \
