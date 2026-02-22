@@ -25,6 +25,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Tuple
 import hashlib
+import hmac
 from itertools import combinations
 
 # Fixed payload size to prevent length fingerprinting
@@ -329,7 +330,7 @@ def reconstruct_submission(shares: List[Tuple[int, bytes]], private_key_path: st
             json_bytes = json_bytes[4:]
             expected = hashlib.sha256(json_bytes).digest()[:4]
 
-            if checksum != expected:
+            if not hmac.compare_digest(checksum, expected):
                 continue
 
             return json.loads(json_bytes.decode('utf-8'))
