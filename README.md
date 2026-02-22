@@ -169,7 +169,10 @@ age1xxxxxxxxxx...xxxxx.abc123def456
 ```
 
 The public key encrypts the response. The unique ID deduplicates submissions.
-The public key encrypts the response. The unique ID deduplicates submissions 
+
+## Token Security
+
+Tokens are bearer credentials. Possession of one valid token allows exactly one submission for that token. If the full token list is disclosed before distribution, survey integrity may be affected.
 
 ## License
 
