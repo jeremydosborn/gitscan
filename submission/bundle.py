@@ -4,9 +4,6 @@
 """
 Bundle survey responses for secure transmission.
 
-NOTE: The Shamir Secret Sharing implementation is WIP and slated for 
-refactoring into a standalone, hardened, and modern Python module.
-
 Security architecture:
 1. Payload contains ONLY: version + single score + submission_id (no other identifying info)
 2. Padded to fixed size (prevents length fingerprinting)
