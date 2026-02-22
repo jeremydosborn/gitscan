@@ -24,6 +24,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import List, Tuple
+import hashlib
+from itertools import combinations
 
 # Fixed payload size to prevent length fingerprinting
 PADDED_SIZE = 4096
@@ -288,6 +290,10 @@ def prepare_submission(payload: dict, public_key: str = None) -> list:
     # Serialize
     json_bytes = json.dumps(payload, separators=(',', ':')).encode('utf-8')
     
+    # Checksum to avoid single share compromise data loss
+    checksum = hashlib.sha256(json_bytes).digest()[:4]
+    json_bytes = checksum + json_bytes
+
     # Pad to fixed size
     padded = pad_payload(json_bytes)
     
@@ -302,7 +308,9 @@ def prepare_submission(payload: dict, public_key: str = None) -> list:
 
 def reconstruct_submission(shares: List[Tuple[int, bytes]], private_key_path: str) -> dict:
     """
-    Reverse pipeline: reconstruct -> decrypt -> unpad -> deserialize
+    Reverse pipeline: reconstruct -> decrypt -> unpad -> verify -> deserialize
+
+    Tries all combinations of threshold shares to handle corrupted shares.
     
     Args:
         shares: List of (shard_index, encrypted_share) tuples
@@ -311,14 +319,22 @@ def reconstruct_submission(shares: List[Tuple[int, bytes]], private_key_path: st
     Returns:
         Original payload dict
     """
-    # Reconstruct encrypted blob
-    encrypted = shamir_reconstruct(shares, threshold=2)
-    
-    # Decrypt
-    padded = decrypt_age(encrypted, private_key_path)
-    
-    # Unpad
-    json_bytes = unpad_payload(padded)
-    
-    # Deserialize
-    return json.loads(json_bytes.decode('utf-8'))
+    for combo in combinations(shares, 2):
+        try:
+            encrypted = shamir_reconstruct(list(combo), threshold=2)
+            padded = decrypt_age(encrypted, private_key_path)
+            json_bytes = unpad_payload(padded)
+
+            checksum = json_bytes[:4]
+            json_bytes = json_bytes[4:]
+            expected = hashlib.sha256(json_bytes).digest()[:4]
+
+            if checksum != expected:
+                continue
+
+            return json.loads(json_bytes.decode('utf-8'))
+
+        except (RuntimeError, ValueError):
+            continue
+
+    raise ValueError("Reconstruction failed - all share combinations invalid")
