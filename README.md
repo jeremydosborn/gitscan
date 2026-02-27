@@ -2,6 +2,8 @@
 
 Config-driven repo scanner with anonymous research survey using threshold cryptography.
 
+GitGap is an early proof of concept reference implementation of [dat-p](https://github.com/jeremydosborn/dat-p-spec)(Distributed Anonymous Research Protocol). Both are experimental and have not been independently audited. Not for use with real participants or sensitive data.
+
 ## What it does
 
 Scans repositories for patterns defined in YAML configs, then optionally collects an anonymous survey response about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints.

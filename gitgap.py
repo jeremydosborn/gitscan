@@ -25,7 +25,7 @@ from typing import Dict, Any, List
 
 import yaml
 
-from survey import bundle, submit
+from submission import bundle, submit
 
 
 # Default configs directory
@@ -81,11 +81,6 @@ def scan_repo(repo_path: str, config: Dict[str, Any]) -> Dict[str, Any]:
     
     if not repo_path.exists():
         print(f"Error: {repo_path} does not exist", file=sys.stderr)
-        sys.exit(1)
-    
-    scanner_dir = Path(__file__).parent.resolve()
-    if repo_path == scanner_dir:
-        print(f"Error: Cannot scan the scanner itself", file=sys.stderr)
         sys.exit(1)
     
     project_name = repo_path.name
@@ -296,8 +291,6 @@ def main():
                         help="Scan config name or path (default: tufcheck)")
     parser.add_argument("-q", "--quiet", action="store_true", 
                         help="Suppress output")
-    parser.add_argument("--no-token", action="store_true",
-                        help="Skip token requirement (local testing only)")
     parser.add_argument("--token", help="Survey token (publickey.uniqueid)")
     parser.add_argument("--endpoint", help="Shard endpoint (e.g. shard1.survey.com)")
     parser.add_argument("--list-configs", action="store_true",
@@ -323,14 +316,11 @@ def main():
         print(f"Results saved to: {output_path}")
         
         if prompt_survey(config):
-            if args.no_token:
-                print("\n[--no-token] Testing mode")
-                run_survey(None, None, config)
-            elif args.token:
+            if args.token:
                 run_survey(args.token, args.endpoint, config)
             else:
-                print("\n✗ Survey requires --token")
-                print("  Or use --no-token for local testing")
+                print("\n✗ Survey requires a token.")
+                print("  Run 'gitgap-admin tokens 1' to generate one.")
 
 
 if __name__ == "__main__":

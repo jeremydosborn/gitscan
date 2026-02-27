@@ -33,7 +33,7 @@ from typing import List, Dict, Any
 
 # Import survey modules
 sys.path.insert(0, str(Path(__file__).parent))
-from survey import bundle, submit
+from submission import bundle, submit
 
 
 # Admin directory
