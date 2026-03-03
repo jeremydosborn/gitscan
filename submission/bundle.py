@@ -21,10 +21,8 @@ considered production-ready.
 import json
 import secrets
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import List, Tuple
-import hashlib
 from itertools import combinations
 
 # Fixed payload size to prevent length fingerprinting
@@ -54,75 +52,33 @@ def pad_payload(data: bytes, size: int = PADDED_SIZE) -> bytes:
 
 def unpad_payload(padded_data: bytes) -> bytes:
     """Remove padding from a padded payload."""
+    if len(padded_data) < 4:
+        raise ValueError("Padded data too short to contain length prefix")
     length = int.from_bytes(padded_data[:4], 'big')
+    if 4 + length > len(padded_data):
+        raise ValueError(f"Length prefix {length} exceeds available data")
     return padded_data[4:4 + length]
 
-
 def encrypt_age(plaintext: bytes, public_key: str) -> bytes:
-    """
-    Encrypt data using age.
-    
-    Args:
-        plaintext: Data to encrypt
-        public_key: age public key (age1...)
-        
-    Returns:
-        Encrypted bytes (age armor format)
-    """
-    # Write plaintext to temp file
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_in:
-        tmp_in.write(plaintext)
-        tmp_in_path = tmp_in.name
-    
-    tmp_out_path = tmp_in_path + ".age"
-    
-    try:
-        result = subprocess.run(
-            ["age", "-r", public_key, "-o", tmp_out_path, tmp_in_path],
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode != 0:
-            raise RuntimeError(f"age encryption failed: {result.stderr}")
-        
-        with open(tmp_out_path, "rb") as f:
-            return f.read()
-            
-    finally:
-        Path(tmp_in_path).unlink(missing_ok=True)
-        Path(tmp_out_path).unlink(missing_ok=True)
+    result = subprocess.run(
+        ["age", "-r", public_key],
+        input=plaintext,
+        capture_output=True
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"age encryption failed: {result.stderr.decode()}")
+    return result.stdout
 
 
 def decrypt_age(ciphertext: bytes, private_key_path: str) -> bytes:
-    """
-    Decrypt data using age.
-    
-    Args:
-        ciphertext: Encrypted data
-        private_key_path: Path to age private key file
-        
-    Returns:
-        Decrypted bytes
-    """
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_in:
-        tmp_in.write(ciphertext)
-        tmp_in_path = tmp_in.name
-    
-    try:
-        result = subprocess.run(
-            ["age", "-d", "-i", private_key_path, tmp_in_path],
-            capture_output=True
-        )
-        
-        if result.returncode != 0:
-            raise RuntimeError(f"age decryption failed: {result.stderr.decode()}")
-        
-        return result.stdout
-        
-    finally:
-        Path(tmp_in_path).unlink(missing_ok=True)
-
+    result = subprocess.run(
+        ["age", "-d", "-i", private_key_path],
+        input=ciphertext,
+        capture_output=True
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"age decryption failed: {result.stderr.decode()}")
+    return result.stdout
 
 def shamir_split(data: bytes, n: int = 3, threshold: int = 2) -> List[Tuple[int, bytes]]:
     """
@@ -323,7 +279,7 @@ def reconstruct_submission(shares: List[Tuple[int, bytes]], private_key_path: st
 
             return json.loads(json_bytes.decode('utf-8'))
 
-        except (RuntimeError, ValueError):
+        except (RuntimeError, ValueError, json.JSONDecodeError):
             continue
 
     raise ValueError("Reconstruction failed - all share combinations invalid")

@@ -1,24 +1,16 @@
-# configs/supply_chain.yaml
+# configs/supply.yaml
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2025 Jeremy D. Osborn
 name: "Supply Chain Security"
 version: 4
 questions:
-  - text: |
-      This survey asks two questions about your organization's internal supply
-      chain security practices: which mechanisms you use, and how mature your
-      implementation is. Your answers will be used to assess the state of
-      supply chain security across open source projects. Do you commit to
-      answering honestly, to the best of your knowledge? If you cannot commit,
-      please do not continue.
+  - text: "This survey asks two questions about your organization's internal supply chain security practices: which mechanisms you use, and how mature your implementation is. Your answers will be used to assess the state of supply chain security across open source projects. Do you commit to answering honestly, to the best of your knowledge? If you cannot commit, please do not continue."
     type: single_select
     options:
       y: "Yes, I commit to answering honestly"
-      n: "No, I cannot commit — I will exit the survey"
+      exit: "No, I cannot commit — I will exit the survey"
       
-  - text: |
-      Which of the following supply chain security mechanisms does your
-      organization use internally for this project? Select all that apply.
+  - text: "Which of the following supply chain security mechanisms does your organization use internally for this project? Select all that apply."
     type: multi_select
     options:
       a: "Cryptographic signing of release artifacts (GPG/PGP, Sigstore/Cosign, Notary v2, or similar)"
@@ -27,14 +19,8 @@ questions:
       d: "Reproducible builds"
       e: "Secure distribution metadata (TUF or similar)"
       f: "Source repository policy enforcement (gittuf or similar)"
-      z: "None of the above"
-      0: "Prefer not to answer"
 
-  - text: |
-      For the mechanisms you selected, how would you rate the maturity of your
-      organization's internal implementation? Maturity means complete
-      implementation, applied consistently, and aligned with current best
-      practices as you understand them.
+  - text: "For the mechanisms you selected, how would you rate the maturity of your organization's internal implementation? Maturity means complete implementation, applied consistently, and aligned with current best practices as you understand them."
     type: likert
     options:
       1: "Not mature"
@@ -42,7 +28,6 @@ questions:
       3: "Moderately mature"
       4: "Mostly mature"
       5: "Fully mature"
-      0: "Prefer not to answer"
 
 scanners:
   gittuf:

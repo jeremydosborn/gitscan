@@ -19,14 +19,12 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
+import yaml
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
-
-import yaml
-
 from submission import bundle, submit
-
 
 # Default configs directory
 CONFIGS_DIR = Path(__file__).parent / "configs"
@@ -202,8 +200,8 @@ def prompt_survey(config: Dict[str, Any]) -> bool:
     print("ANONYMOUS RESEARCH SURVEY")
     print("=" * 60)
     print("""
-This scan is part of research. You can help by answering ONE
-anonymous question.
+This scan is part of research. You can help by answering one or more
+anonymous questions.
 
 Your response:
   - Contains NO identifying information
@@ -214,73 +212,91 @@ Your response:
     response = input("Participate in research survey? [y/N]: ").strip().lower()
     return response in ('y', 'yes')
 
-
 def run_survey(token: str, endpoint: str, config: Dict[str, Any]):
-    """Run the survey with question from config."""
-    # Parse token if provided
+    questions = config.get("questions", [])
+    if not questions:
+        print("No questions defined in config.")
+        return
+
     if token:
-        public_key, unique_id = token.rsplit('.', 1)
-        submission_id = unique_id
+        public_key, submission_id = token.rsplit('.', 1)
     else:
         public_key = None
-        unique_id = "_no_token_test_"
-        submission_id = unique_id
-    
-    # Derive endpoints if provided
+        submission_id = "_no_token_test_"
+
     if endpoint:
         base = endpoint.replace("shard1.", "")
         endpoints = [f"shard{i}.{base}" for i in [1, 2, 3]]
     else:
         endpoints = None
-    
-    # Get question from config
-    question_config = config.get("question", {})
-    question_text = question_config.get("text", "Rate from 1-5:")
-    options = question_config.get("options", {})
-    
-    # Display question
-    print(question_text)
-    for val, label in sorted(options.items()):
-        print(f"  {val} - {label}")
-    
-    # Collect response
-    while True:
-        try:
-            response = input("\nYour response (0-5): ").strip()
-            if response.lower() in ('q', 'quit', 'exit', ''):
-                print("\nSurvey skipped.")
-                return
-            
-            value = int(response)
-            if value == 0:
-                print("\nNo problem. Your response will not be recorded.")
-                return
-            if 1 <= value <= 5:
-                break
-            print("Please enter a number between 0 and 5")
-        except ValueError:
-            print("Please enter a valid number")
-        except KeyboardInterrupt:
-            print("\nSurvey skipped.")
-            return
-    
-    payload = {"v": config.get("version", 1), "response": value}
-    
+
+    responses = {}
+
+    for i, q in enumerate(questions):
+        qtype = q.get("type")
+        print()
+        print(textwrap.fill(q['text'], width=60))
+        options = q.get("options", {})
+
+        for key, label in sorted(options.items(), key=lambda x: str(x[0])):
+            print(f"  [{key}] {label}")
+
+        if qtype == "single_select":
+            while True:
+                try:
+                    answer = input("\nYour answer: ").strip().lower()
+                    if answer in options:
+                        # Pledge gate
+                        if answer == "exit":
+                            print("\nSurvey exited. No response recorded.")
+                            return
+                        responses[f"q{i+1}"] = answer
+                        break
+                    print(f"Please enter one of: {', '.join(str(k) for k in options)}")
+                except KeyboardInterrupt:
+                    print("\nSurvey skipped.")
+                    return
+
+        elif qtype == "multi_select":
+            print("Enter all that apply, separated by spaces (e.g. a b d):")
+            while True:
+                try:
+                    raw = input("\nYour answer: ").strip().lower().split()
+                    valid = [r for r in raw if r in options]
+                    if valid:
+                        responses[f"q{i+1}"] = valid
+                        break
+                    print(f"Please enter one or more of: {', '.join(str(k) for k in options)}")
+                except KeyboardInterrupt:
+                    print("\nSurvey skipped.")
+                    return
+
+        elif qtype == "likert":
+            while True:
+                try:
+                    answer = input("\nYour answer: ").strip()
+                    if answer in options or answer in [str(k) for k in options]:
+                        responses[f"q{i+1}"] = int(answer)
+                        break
+                    print(f"Please enter one of: {', '.join(str(k) for k in options)}")
+                except KeyboardInterrupt:
+                    print("\nSurvey skipped.")
+                    return
+
+    payload = {"v": config.get("version", 1), "responses": responses}
+
     print("\nPreparing submission...")
-    
     try:
         encrypted_shares = bundle.prepare_submission(payload, public_key)
     except FileNotFoundError as e:
         print(f"\n✗ Survey not configured: {e}")
-        print("  Run 'gitgap-admin init' first to set up the survey.")
         return
-    
+
     print(f"  ✓ Payload encrypted")
     print(f"  ✓ Split into {len(encrypted_shares)} shares (Shamir 2-of-3)")
     print(f"  ✓ Padded to fixed size")
-    
-    submit.submit_shares(encrypted_shares, submission_id, endpoints)
 
+    submit.submit_shares(encrypted_shares, submission_id, endpoints)
 
 def main():
     parser = argparse.ArgumentParser(

@@ -30,6 +30,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
+import os
 
 # Import survey modules
 sys.path.insert(0, str(Path(__file__).parent))
@@ -308,11 +309,9 @@ def cmd_aggregate(args):
     
     aggregates = {
         "n": 0,
-        "sum": 0,
-        "distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+        "questions": {},
         "aggregated_at": datetime.now().isoformat(),
     }
-    
     files_to_delete = []
     errors = []
     
@@ -329,24 +328,29 @@ def cmd_aggregate(args):
             
             payload = bundle.reconstruct_submission(shares, str(private_key_path))
             
-            response = payload.get("response") or payload.get("internal_score")
-            if response not in [1, 2, 3, 4, 5]:
-                errors.append(f"invalid response: {response}")
+            responses = payload.get("responses", {})
+            if not responses:
+                errors.append(f"empty responses in payload")
                 continue
-            
+
             aggregates["n"] += 1
-            aggregates["sum"] += response
-            aggregates["distribution"][response] += 1
+            for qkey, value in responses.items():
+                if qkey not in aggregates["questions"]:
+                    aggregates["questions"][qkey] = {"distribution": {}}
+                if value is not None:
+                    dist_key = str(value) if not isinstance(value, list) else "multi"
+                    if isinstance(value, list):
+                        for v in value:
+                            aggregates["questions"][qkey]["distribution"][v] = \
+                                aggregates["questions"][qkey]["distribution"].get(v, 0) + 1
+                    else:
+                        aggregates["questions"][qkey]["distribution"][dist_key] = \
+                            aggregates["questions"][qkey]["distribution"].get(dist_key, 0) + 1
             
-            print(f"  ✓ response: {response}")
+            print(f"  ✓ responses: {list(responses.keys())}")
             
         except Exception as e:
             errors.append(str(e))
-    
-    if aggregates["n"] > 0:
-        aggregates["mean"] = round(aggregates["sum"] / aggregates["n"], 2)
-    else:
-        aggregates["mean"] = None
     
     # Delete duplicate shards too
     for submission_id, shards in ready.items():
@@ -356,8 +360,6 @@ def cmd_aggregate(args):
     
     print(f"\nAggregation complete:")
     print(f"  Responses: {aggregates['n']}")
-    print(f"  Mean: {aggregates['mean']}")
-    print(f"  Distribution: {aggregates['distribution']}")
     
     if errors:
         print(f"\nErrors ({len(errors)}):")
@@ -372,14 +374,16 @@ def cmd_aggregate(args):
         print(f"\nMerging with existing aggregates (n={existing.get('n', 0)})...")
         
         aggregates["n"] += existing.get("n", 0)
-        aggregates["sum"] += existing.get("sum", 0)
-        for k in [1, 2, 3, 4, 5]:
-            aggregates["distribution"][k] += existing.get("distribution", {}).get(str(k), 0)
-        
-        if aggregates["n"] > 0:
-            aggregates["mean"] = round(aggregates["sum"] / aggregates["n"], 2)
+        for qkey, qdata in existing.get("questions", {}).items():
+            if qkey not in aggregates["questions"]:
+                aggregates["questions"][qkey] = {"distribution": {}}
+            for k, v in qdata.get("distribution", {}).items():
+                aggregates["questions"][qkey]["distribution"][k] = \
+                    aggregates["questions"][qkey]["distribution"].get(k, 0) + v
     
-    aggregates_path.write_text(json.dumps(aggregates, indent=2))
+    tmp = aggregates_path.with_suffix('.tmp')
+    tmp.write_text(json.dumps(aggregates, indent=2))
+    os.replace(tmp, aggregates_path)
     print(f"\nAggregates saved to: {aggregates_path}")
     
     # Delete shares
@@ -395,24 +399,11 @@ def cmd_aggregate(args):
     print("\n" + "=" * 60)
     print("AGGREGATION COMPLETE")
     print("=" * 60)
-    print(f"""
-Results:
-  Total responses: {aggregates['n']}
-  Mean score: {aggregates['mean']}
-  
-Distribution:
-  1 (Much less complete):    {aggregates['distribution'][1]}
-  2 (Somewhat less):         {aggregates['distribution'][2]}
-  3 (About the same):        {aggregates['distribution'][3]}
-  4 (Somewhat more):         {aggregates['distribution'][4]}
-  5 (Much more complete):    {aggregates['distribution'][5]}
-
-Individual responses have been deleted.
-Only aggregate statistics remain.
-""")
-    
+    print(f"\n  Total responses: {aggregates['n']}\n\nPer-question distributions:")
+    for qkey, qdata in aggregates["questions"].items():
+        print(f"  {qkey}: {qdata['distribution']}")
+    print("\nIndividual responses have been deleted.\nOnly aggregate statistics remain.")    
     return 0
-
 
 def cmd_destroy_key(args):
     """Securely delete the private key."""
