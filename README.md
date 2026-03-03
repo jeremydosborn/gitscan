@@ -6,7 +6,7 @@ GitGap is an early proof of concept and reference implementation of [dat-p](http
 
 ## What it does
 
-Scans repositories for patterns defined in YAML configs, then optionally collects an anonymous survey response about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints.
+Scans repositories for patterns defined in YAML configs, then optionally collects anonymous survey responses about those results. Survey responses are encrypted with age and split using Shamir's Secret Sharing, distributing shares across multiple endpoints.
 
 ## Security Properties
 
@@ -32,12 +32,12 @@ gitgap-admin tokens <count>
   → outputs: publickey.uniqueid tokens
   → share tokens/usage via secure channel
                                          gitgap scan /repo \
-                                           --config tufcheck \
+                                           --config supply \
                                            --token <token> \
                                            --endpoint shard1.survey.com
                                          
                                            → scans repo (patterns from yaml)
-                                           → asks one question
+                                           → asks one or more questions
                                            → encrypts response (age)
                                            → splits into 3 shares (Shamir 2-of-3)
                                            → POSTs to 3 endpoints
@@ -85,7 +85,7 @@ python3 gitgap-admin.py tokens 50 > tokens.csv
 python3 gitgap-admin.py status
 
 # Aggregate after survey closes
-python3 gitgap-admin.py aggregate --key ~/.gitgap-admin/submission/private.key
+python3 gitgap-admin.py aggregate --key ~/.gitgap-admin/survey/private.key
 
 # Permanently close survey (optional)
 python3 gitgap-admin.py destroy-key
@@ -96,39 +96,40 @@ python3 gitgap-admin.py destroy-key
 ```bash
 # Scan repo and respond
 python3 gitgap.py /path/to/repo \
-  --config tufcheck \
+  --config supply \
   --token <your-token> \
   --endpoint shard1.survey.com
-```
-
-### Local Testing (No Token)
-
-```bash
-python3 gitgap-admin.py init
-python3 gitgap.py /path/to/repo --config tufcheck --no-token
-python3 gitgap-admin.py aggregate --key ~/.gitgap-admin/submission/private.key
 ```
 
 ## Configs
 
 Scan patterns are defined in YAML:
 
-```yaml
-# configs/tufcheck.yaml
-name: "Supply Chain Security"
-version: 1
+Example:
 
-question:
-  text: |
-    Compared to what's publicly visible, how complete is
-    your organization's INTERNAL implementation?
-  options:
-    1: "Much less complete"
-    2: "Somewhat less"
-    3: "About the same"
-    4: "Somewhat more"
-    5: "Much more complete"
-    0: "Prefer not to answer"
+```yaml
+name: "Supply Chain Security"
+version: 4
+
+questions:
+  - text: "Do you commit to answering honestly?"
+    type: single_select
+    options:
+      y: "Yes"
+      exit: "No — exit survey"
+
+  - text: "Which mechanisms does your organization use?"
+    type: multi_select
+    options:
+      a: "Signing"
+      b: "SBOM"
+      c: "Attestation"
+
+  - text: "How mature is your implementation?"
+    type: likert
+    options:
+      1: "Not mature"
+      5: "Fully mature"
 
 scanners:
   tuf:
@@ -154,7 +155,7 @@ gitgap/
 ├── gitgap.py           # scanner + survey client
 ├── gitgap-admin.py     # admin CLI
 ├── configs/
-│   └── tufcheck.yaml   # supply chain security scan
+│   └── supply.yaml   # supply chain security scan
 └── submission/
     ├── bundle.py       # age encryption + Shamir splitting
     └── submit.py       # endpoint submission (local/remote)
