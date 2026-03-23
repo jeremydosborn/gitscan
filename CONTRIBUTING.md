@@ -1,6 +1,6 @@
-# Contributing to GitGap
+# Contributing to GitScan
 
-Thank you for your interest in contributing to GitGap.
+Thank you for your interest in contributing to gitscan.
 
 ## License for Contributions
 

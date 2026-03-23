@@ -29,7 +29,7 @@ from itertools import combinations
 PADDED_SIZE = 4096
 
 # Default public key path - survey admin sets this during init
-DEFAULT_PUBKEY_PATH = Path.home() / ".gitgap-admin" / "survey" / "public.key"
+DEFAULT_PUBKEY_PATH = Path.home() / ".gitscan-admin" / "survey" / "public.key"
 
 def pad_payload(data: bytes, size: int = PADDED_SIZE) -> bytes:
     """
@@ -225,7 +225,7 @@ def load_public_key(key_path: Path = None) -> str:
     if not key_path.exists():
         raise FileNotFoundError(
             f"Public key not found at {key_path}. "
-            "Run 'gitgap-admin init' to create a survey."
+            "Run 'gitscan-admin init' to create a survey."
         )
     
     key = key_path.read_text().strip()

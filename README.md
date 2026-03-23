@@ -1,8 +1,8 @@
-# GitGap
+# gitscan
 
 Config-driven repo scanner with anonymous research survey using threshold cryptography.
 
-GitGap is an early proof of concept and reference implementation of [dat-p](https://github.com/jeremydosborn/dat-p-spec) (Distributed Anonymous Testimony Protocol). Both are experimental and have not been independently audited.
+gitscan is an early proof of concept and reference implementation of [dat-p](https://github.com/jeremydosborn/dat-p-spec) (Distributed Anonymous Testimony Protocol). Both are experimental and have not been independently audited.
 
 ## What it does
 
@@ -25,13 +25,13 @@ Shamir’s secret-sharing scheme provides information-theoretic confidentiality 
 ```
 ADMIN                                    PARTICIPANT
 ─────                                    ───────────
-gitgap-admin init                        
+gitscan-admin init                        
   → generates keypair + salt             
 
-gitgap-admin tokens <count>
+gitscan-admin tokens <count>
   → outputs: publickey.uniqueid tokens
   → share tokens/usage via secure channel
-                                         gitgap scan /repo \
+                                         gitscan scan /repo \
                                            --config supply \
                                            --token <token> \
                                            --endpoint shard1.survey.com
@@ -42,7 +42,7 @@ gitgap-admin tokens <count>
                                            → splits into 3 shares (Shamir 2-of-3)
                                            → POSTs to 3 endpoints
 
-gitgap-admin aggregate --key private.key
+gitscan-admin aggregate --key private.key
   → logs counts (before decrypt)
   → dedupes by submission ID (keeps first)
   → reconstructs shares from endpoints (2 of 3)
@@ -55,8 +55,8 @@ gitgap-admin aggregate --key private.key
 
 ```bash
 # Clone
-git clone https://github.com/jeremydosborn/gitgap
-cd gitgap
+git clone https://github.com/jeremydosborn/gitscan
+cd gitscan
 
 # Setup
 
@@ -74,28 +74,28 @@ apt install age     # Debian/Ubuntu
 
 ```bash
 # Initialize survey (generates keypair)
-python3 gitgap-admin.py init
+python3 gitscan-admin.py init
 
 # Generate tokens for participants
-python3 gitgap-admin.py tokens 50 > tokens.csv
+python3 gitscan-admin.py tokens 50 > tokens.csv
 
 # Share tokens via secure channel, or use locals in dev
 
 # Check status
-python3 gitgap-admin.py status
+python3 gitscan-admin.py status
 
 # Aggregate after survey closes
-python3 gitgap-admin.py aggregate --key ~/.gitgap-admin/survey/private.key
+python3 gitscan-admin.py aggregate --key ~/.gitscan-admin/survey/private.key
 
 # Permanently close survey (optional)
-python3 gitgap-admin.py destroy-key
+python3 gitscan-admin.py destroy-key
 ```
 
 ### Participant: Respond to Survey
 
 ```bash
 # Scan repo and respond
-python3 gitgap.py /path/to/repo \
+python3 gitscan.py /path/to/repo \
   --config supply \
   --token <your-token> \
   --endpoint shard1.survey.com
@@ -145,15 +145,15 @@ scanners:
 List available configs:
 
 ```bash
-python3 gitgap.py --list-configs
+python3 gitscan.py --list-configs
 ```
 
 ## Architecture
 
 ```
-gitgap/
-├── gitgap.py           # scanner + survey client
-├── gitgap-admin.py     # admin CLI
+gitscan/
+├── gitscan.py           # scanner + survey client
+├── gitscan-admin.py     # admin CLI
 ├── configs/
 │   └── supply.yaml   # supply chain security scan
 └── submission/

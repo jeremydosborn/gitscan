@@ -20,13 +20,13 @@ import urllib.request
 import urllib.error
 
 # Base directory for local survey data
-SURVEY_DIR = Path.home() / ".gitgap-survey"
+SURVEY_DIR = Path.home() / ".gitscan-survey"
 
 # Local endpoint names (would be real URLs in production)
 ENDPOINT_NAMES = [
-    "shard1.gitgap.dev",
-    "shard2.gitgap.dev",
-    "shard3.gitgap.dev",
+    "shard1.gitscan.dev",
+    "shard2.gitscan.dev",
+    "shard3.gitscan.dev",
 ]
 
 
