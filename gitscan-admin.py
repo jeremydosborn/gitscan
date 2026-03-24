@@ -4,7 +4,7 @@
 # Copyright 2025 Jeremy D. Osborn
 
 """
-gitgap-admin - Survey administration tool.
+gitscan-admin - Survey administration tool.
 
 Commands:
     init        Initialize a new survey (generate keypair)
@@ -13,10 +13,10 @@ Commands:
     status      Show pending submissions
 
 Usage:
-    gitgap-admin init
-    gitgap-admin tokens emails.txt > tokens.csv
-    gitgap-admin aggregate --key private.key
-    gitgap-admin status
+    gitscan-admin init
+    gitscan-admin tokens emails.txt > tokens.csv
+    gitscan-admin aggregate --key private.key
+    gitscan-admin status
 """
 
 import argparse
@@ -38,7 +38,7 @@ from submission import bundle, submit
 
 
 # Admin directory
-ADMIN_DIR = Path.home() / ".gitgap-admin"
+ADMIN_DIR = Path.home() / ".gitscan-admin"
 SURVEY_DIR = ADMIN_DIR / "survey"
 
 
@@ -46,7 +46,7 @@ def cmd_init(args):
     """Initialize a new survey - generate age keypair."""
     
     print("=" * 60)
-    print("INITIALIZING GITGAP SURVEY")
+    print("INITIALIZING gitscan SURVEY")
     print("=" * 60)
     
     # Create directories
@@ -117,7 +117,7 @@ def cmd_init(args):
     
     # Create endpoint directories
     print("\nCreating endpoint directories...")
-    endpoints_dir = Path.home() / ".gitgap-survey" / "endpoints"
+    endpoints_dir = Path.home() / ".gitscan-survey" / "endpoints"
     for endpoint in submit.ENDPOINT_NAMES:
         (endpoints_dir / endpoint).mkdir(parents=True, exist_ok=True)
         print(f"  ✓ {endpoint}/")
@@ -132,13 +132,13 @@ Next steps:
    {private_key_path}
 
 2. GENERATE TOKENS
-   gitgap-admin tokens emails.txt > tokens.csv
+   gitscan-admin tokens emails.txt > tokens.csv
 
 3. DISTRIBUTE TOKENS
    Send each participant their token and endpoint via secure channel.
 
 4. AGGREGATE
-   gitgap-admin aggregate --key {private_key_path}
+   gitscan-admin aggregate --key {private_key_path}
 """)
     
     return 0
@@ -150,7 +150,7 @@ def cmd_tokens(args):
     # Load public key
     public_key_path = SURVEY_DIR / "public.key"
     if not public_key_path.exists():
-        print("Error: Public key not found. Run 'gitgap-admin init' first.", file=sys.stderr)
+        print("Error: Public key not found. Run 'gitscan-admin init' first.", file=sys.stderr)
         return 1
 
     public_key = public_key_path.read_text().strip()
@@ -158,7 +158,7 @@ def cmd_tokens(args):
     # Load salt
     salt_path = SURVEY_DIR / "token.salt"
     if not salt_path.exists():
-        print("Error: Token salt not found. Run 'gitgap-admin init' first.", file=sys.stderr)
+        print("Error: Token salt not found. Run 'gitscan-admin init' first.", file=sys.stderr)
         return 1
 
     salt = salt_path.read_text().strip()
@@ -446,7 +446,7 @@ After deletion:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="gitgap survey administration"
+        description="gitscan survey administration"
     )
     subparsers = parser.add_subparsers(dest="command", help="Command")
     

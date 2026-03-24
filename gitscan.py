@@ -4,14 +4,14 @@
 # Copyright 2025 Jeremy D. Osborn
 
 """
-gitgap - Config-driven repo scanner with anonymous research survey.
+gitscan - Config-driven repo scanner with anonymous research survey.
 
 Scans repositories for patterns defined in YAML config files.
 Optionally collects anonymous, encrypted survey response.
 
 Usage:
-    gitgap scan /path/to/repo --config tufcheck
-    gitgap scan /path/to/repo --config /path/to/custom.yaml
+    gitscan scan /path/to/repo --config tufcheck
+    gitscan scan /path/to/repo --config /path/to/custom.yaml
 """
 import argparse
 import json
@@ -154,7 +154,7 @@ def print_results(results: Dict[str, Any], config: Dict[str, Any]):
     scanners = config.get("scanners", {})
     
     print("\n" + "=" * 60)
-    print(f"GITGAP RESULTS: {results['project']}")
+    print(f"gitscan RESULTS: {results['project']}")
     print(f"Config: {results['config']}")
     print("=" * 60)
     
@@ -336,7 +336,7 @@ def main():
                 run_survey(args.token, args.endpoint, config)
             else:
                 print("\n✗ Survey requires a token.")
-                print("  Run 'gitgap-admin tokens 1' to generate one.")
+                print("  Run 'gitscan-admin tokens 1' to generate one.")
 
 
 if __name__ == "__main__":
