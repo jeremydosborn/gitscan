@@ -46,7 +46,7 @@ def cmd_init(args):
     """Initialize a new survey - generate age keypair."""
     
     print("=" * 60)
-    print("INITIALIZING gitscan SURVEY")
+    print("INITIALIZING GITSCAN SURVEY")
     print("=" * 60)
     
     # Create directories
